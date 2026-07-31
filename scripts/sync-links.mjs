@@ -7,12 +7,25 @@
  * from KV — use `DELETE /api/links/:slug` for that.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 import { isValidSlug, normalizeTarget } from '../src/index.js';
+
+function wranglerBin() {
+  const require = createRequire(import.meta.url);
+  let manifestPath;
+  try {
+    manifestPath = require.resolve('wrangler/package.json');
+  } catch {
+    throw new Error('wrangler is not installed — run `npm install` first.');
+  }
+  const { bin } = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  return resolve(dirname(manifestPath), typeof bin === 'string' ? bin : bin.wrangler);
+}
 
 const links = JSON.parse(await readFile(new URL('../links.json', import.meta.url), 'utf8'));
 
@@ -35,10 +48,10 @@ if (entries.length === 0) {
 const file = join(mkdtempSync(join(tmpdir(), 'shortener-')), 'bulk.json');
 writeFileSync(file, JSON.stringify(entries));
 
-// On Windows the executable is npx.cmd; execFileSync does not resolve PATHEXT.
-const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-
-execFileSync(npx, ['wrangler', 'kv', 'bulk', 'put', file, '--binding', 'LINKS', '--remote'], {
+// Run wrangler's entrypoint under this Node rather than going through npx: the
+// npx launcher is npx.cmd on Windows, which Node refuses to spawn without a
+// shell (EINVAL), and PATH lookup of extensionless "npx" fails there too.
+execFileSync(process.execPath, [wranglerBin(), 'kv', 'bulk', 'put', file, '--binding', 'LINKS', '--remote'], {
   stdio: 'inherit',
 });
 
