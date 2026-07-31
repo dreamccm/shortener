@@ -1,0 +1,12 @@
+name = "shortener"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+# Created with: npx wrangler kv namespace create LINKS
+# Paste the returned id below (it is not a secret).
+[[kv_namespaces]]
+binding = "LINKS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[observability]
+enabled = true
