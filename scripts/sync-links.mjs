@@ -35,7 +35,10 @@ if (entries.length === 0) {
 const file = join(mkdtempSync(join(tmpdir(), 'shortener-')), 'bulk.json');
 writeFileSync(file, JSON.stringify(entries));
 
-execFileSync('npx', ['wrangler', 'kv', 'bulk', 'put', file, '--binding', 'LINKS', '--remote'], {
+// On Windows the executable is npx.cmd; execFileSync does not resolve PATHEXT.
+const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+
+execFileSync(npx, ['wrangler', 'kv', 'bulk', 'put', file, '--binding', 'LINKS', '--remote'], {
   stdio: 'inherit',
 });
 
