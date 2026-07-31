@@ -4,6 +4,9 @@ URL shortener running on Cloudflare Workers + Workers KV, deployed from GitHub A
 Everything here fits inside free tiers; no custom domain is required — the Worker is
 served from `https://shortener.<your-subdomain>.workers.dev`.
 
+Day-to-day usage — adding links, reading click counts, rotating the token — is
+covered in Korean in [docs/GUIDE.md](docs/GUIDE.md). This README covers setup.
+
 ## How it works
 
 - `src/index.js` — the Worker. Looks up `link:<slug>` in KV and answers with a `302`.
